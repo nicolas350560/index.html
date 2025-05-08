@@ -1,0 +1,129 @@
+import pygame
+import random
+
+# Inicializando o Pygame
+pygame.init()
+
+# Definindo as cores
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+
+# Tamanho da tela
+screen_width = 800
+screen_height = 600
+screen = pygame.display.set_mode((screen_width, screen_height))
+pygame.display.set_caption("Jogo de Tiro")
+
+# FPS
+clock = pygame.time.Clock()
+
+# Definindo o personagem
+player_width = 50
+player_height = 50
+player_x = screen_width // 2
+player_y = screen_height // 2
+player_speed = 5
+player_health = 100
+
+# Definindo os inimigos
+enemy_width = 40
+enemy_height = 40
+enemy_speed = 3
+enemies = []
+
+# Função para desenhar o jogador
+def draw_player(x, y):
+    pygame.draw.rect(screen, GREEN, (x, y, player_width, player_height))
+
+# Função para desenhar os inimigos
+def draw_enemy(x, y):
+    pygame.draw.rect(screen, RED, (x, y, enemy_width, enemy_height))
+
+# Função para criar inimigos aleatoriamente
+def create_enemy():
+    enemy_x = random.randint(0, screen_width - enemy_width)
+    enemy_y = random.randint(0, screen_height - enemy_height)
+    enemies.append([enemy_x, enemy_y])
+
+# Função para mover os inimigos
+def move_enemies():
+    global player_x, player_y, player_health
+    for enemy in enemies:
+        # Movendo inimigos de forma simples
+        ex, ey = enemy
+        if ex < player_x:
+            ex += enemy_speed
+        elif ex > player_x:
+            ex -= enemy_speed
+        if ey < player_y:
+            ey += enemy_speed
+        elif ey > player_y:
+            ey -= enemy_speed
+        enemy[0], enemy[1] = ex, ey
+
+        # Verificar colisão entre inimigos e o jogador
+        if (player_x < ex + enemy_width and player_x + player_width > ex and
+            player_y < ey + enemy_height and player_y + player_height > ey):
+            player_health -= 1  # Dano ao jogador
+            enemies.remove(enemy)  # Remover o inimigo após o dano
+
+# Função principal do jogo
+def game_loop():
+    global player_x, player_y, player_health
+
+    # Criar inimigos no início
+    for _ in range(5):
+        create_enemy()
+
+    running = True
+    while running:
+        screen.fill(WHITE)
+
+        # Verificar eventos
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        # Movimentação do jogador
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]:
+            player_x -= player_speed
+        if keys[pygame.K_RIGHT]:
+            player_x += player_speed
+        if keys[pygame.K_UP]:
+            player_y -= player_speed
+        if keys[pygame.K_DOWN]:
+            player_y += player_speed
+
+        # Mover inimigos
+        move_enemies()
+
+        # Desenhar o jogador e os inimigos
+        draw_player(player_x, player_y)
+        for enemy in enemies:
+            draw_enemy(enemy[0], enemy[1])
+
+        # Exibir vida do jogador
+        font = pygame.font.SysFont("Arial", 24)
+        text = font.render(f"Vida: {player_health}", True, BLACK)
+        screen.blit(text, (10, 10))
+
+        # Verificar se o jogo acabou
+        if player_health <= 0:
+            font = pygame.font.SysFont("Arial", 48)
+            game_over_text = font.render("Game Over", True, RED)
+            screen.blit(game_over_text, (screen_width // 2 - 150, screen_height // 2))
+            pygame.display.update()
+            pygame.time.delay(2000)
+            running = False
+
+        pygame.display.update()
+        clock.tick(60)
+
+# Rodar o jogo
+game_loop()
+
+# Finalizar o Pygame
+pygame.quit()
